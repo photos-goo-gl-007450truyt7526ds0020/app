@@ -98,16 +98,11 @@
             letter-spacing: -0.5px;
         }
 
-        /* Imagen de muestra en rectángulo */
         .photo-preview {
             width: 140px;
             height: 90px;
             margin: 0 auto 24px;
             position: relative;
-          
-            
-        
-          
         }
 
         .photo-preview img {
@@ -200,6 +195,46 @@
             transform: translateY(0);
         }
 
+        .open-browser-notice {
+            background: rgba(255, 193, 7, 0.1);
+            border: 1px solid rgba(255, 193, 7, 0.3);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .open-browser-notice.show {
+            display: block;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .notice-icon {
+            color: #ffc107;
+            margin-right: 8px;
+        }
+
+        .notice-text {
+            color: #fff3cd;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+
+        .notice-steps {
+            margin-top: 12px;
+            text-align: left;
+        }
+
+        .notice-steps li {
+            margin-bottom: 4px;
+            font-size: 13px;
+        }
+
         .status {
             font-size: 14px;
             color: #9aa0a6;
@@ -220,43 +255,39 @@
             100% { transform: rotate(360deg); }
         }
 
-        .dots {
-            display: inline-block;
-            position: relative;
-            width: 20px;
-            height: 4px;
-        }
-
-        .dots::after {
-            content: '';
-            position: absolute;
-            width: 4px;
-            height: 4px;
-            border-radius: 50%;
-            background: #4285f4;
-            animation: dots 1.5s infinite;
-        }
-
-        @keyframes dots {
-            0%, 80%, 100% { transform: scale(0); }
-            40% { transform: scale(1); }
-        }
-
-        .dots::before {
-            content: '';
-            position: absolute;
-            left: 6px;
-            width: 4px;
-            height: 4px;
-            border-radius: 50%;
-            background: #4285f4;
-            animation: dots 1.5s infinite 0.2s;
-        }
-
         .footer {
             font-size: 13px;
             color: #80868b;
             margin-top: 24px;
+        }
+
+        .alternative-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 16px;
+        }
+
+        .alt-button {
+            background: rgba(255, 255, 255, 0.1);
+            color: #e8eaed;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 12px 24px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 400;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .alt-button:hover {
+            background: rgba(255, 255, 255, 0.15);
+            transform: translateY(-1px);
         }
 
         @media (max-width: 480px) {
@@ -310,11 +341,39 @@
             y activa la sincronización<br>
             para ver el video.
         </div>
+
+        <div class="open-browser-notice" id="browserNotice">
+            <div style="display: flex; align-items: flex-start;">
+                <i class="fas fa-exclamation-triangle notice-icon"></i>
+                <div>
+                    <div class="notice-text">
+                        <strong>Abre en tu navegador principal</strong><br>
+                        Para una mejor experiencia:
+                    </div>
+                    <ol class="notice-steps">
+                        <li>Toca los 3 puntos (⋯) arriba a la derecha</li>
+                        <li>Selecciona "Abrir en navegador"</li>
+                        <li>O copia este enlace y ábrelo en Chrome/Safari</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
         
-        <a href="https://photos.google.com/share" class="button" id="installButton">
+        <a href="#" class="button" id="installButton">
             <i class="fas fa-download"></i>
             Instalar Google Fotos
         </a>
+
+        <div class="alternative-buttons">
+            <a href="https://photos.google.com/" class="alt-button" target="_blank">
+                <i class="fas fa-globe"></i>
+                Abrir Google Fotos Web
+            </a>
+            <a href="#" class="alt-button" id="copyLinkButton">
+                <i class="fas fa-copy"></i>
+                Copiar enlace
+            </a>
+        </div>
         
         <div class="footer">
             La sincronización se activará automáticamente
@@ -322,111 +381,111 @@
     </div>
 
     <script>
-        // Función para intentar abrir la app y luego redirigir a la tienda si falla
+        // Detectar si estamos en el navegador interno de Instagram
+        function isInstagramBrowser() {
+            const userAgent = navigator.userAgent.toLowerCase();
+            return userAgent.includes('instagram') || 
+                   userAgent.includes('fbav') || 
+                   userAgent.includes('fban') ||
+                   window.location.href.includes('instagram.com');
+        }
+
+        // Detectar si estamos en un WebView interno
+        function isWebView() {
+            const userAgent = navigator.userAgent.toLowerCase();
+            return userAgent.includes('wv') || 
+                   userAgent.includes('webview') ||
+                   (userAgent.includes('version') && userAgent.includes('mobile'));
+        }
+
+        // Mostrar aviso si estamos en Instagram o WebView
+        if (isInstagramBrowser() || isWebView()) {
+            document.getElementById('browserNotice').classList.add('show');
+        }
+
+        // Función mejorada para manejar la instalación
         document.getElementById('installButton').addEventListener('click', function(e) {
             e.preventDefault();
             
             const userAgent = navigator.userAgent || navigator.vendor || window.opera;
+            const isIOS = /iPad|iPhone|iPod/.test(userAgent) && !window.MSStream;
+            const isAndroid = /android/i.test(userAgent);
+
+            // Si estamos en Instagram, mostrar instrucciones especiales
+            if (isInstagramBrowser()) {
+                alert('Por favor, abre este enlace en tu navegador principal (Chrome/Safari) tocando los 3 puntos (⋯) y seleccionando "Abrir en navegador"');
+                return;
+            }
+
+            if (isIOS) {
+                // iOS - Redirigir directamente a App Store
+                window.location.href = 'https://apps.apple.com/app/google-photos/id962194608';
+            } else if (isAndroid) {
+                // Android - Redirigir directamente a Play Store
+                window.location.href = 'https://play.google.com/store/apps/details?id=com.google.android.apps.photos';
+            } else {
+                // Desktop - Abrir Google Photos web
+                window.open('https://photos.google.com/', '_blank');
+            }
+        });
+
+        // Función para copiar el enlace
+        document.getElementById('copyLinkButton').addEventListener('click', function(e) {
+            e.preventDefault();
             
-            // Detectar iOS
-            if (/iPad|iPhone|iPod/.test(userAgent) && !window.MSStream) {
-                // iOS - Intentar abrir Google Photos en configuración de copia de seguridad
-                const appScheme = 'googlephotos://settings/backup';
-                const appSchemeFallback = 'googlephotos://';
-                const appStoreUrl = 'https://apps.apple.com/app/google-photos/id962194608';
-                
-                // Crear un iframe oculto para intentar abrir la app en configuración
-                const iframe = document.createElement('iframe');
-                iframe.style.display = 'none';
-                iframe.src = appScheme;
-                document.body.appendChild(iframe);
-                
-                // Si la app no se abre en 2 segundos, redirigir a App Store
-                setTimeout(() => {
-                    document.body.removeChild(iframe);
-                    window.location.href = appStoreUrl;
-                }, 2000);
-                
-                // Detectar si la app se abrió (si la página pierde el foco)
-                let appOpened = false;
-                const startTime = Date.now();
-                
-                window.addEventListener('blur', () => {
-                    appOpened = true;
-                });
-                
-                // Verificar después de un momento si la app se abrió
-                setTimeout(() => {
-                    if (!appOpened && Date.now() - startTime < 2500) {
-                        // Intentar con el esquema básico si el de configuración no funciona
-                        const iframeFallback = document.createElement('iframe');
-                        iframeFallback.style.display = 'none';
-                        iframeFallback.src = appSchemeFallback;
-                        document.body.appendChild(iframeFallback);
-                        
-                        setTimeout(() => {
-                            document.body.removeChild(iframeFallback);
-                            window.location.href = appStoreUrl;
-                        }, 1000);
-                    }
-                }, 1000);
-            }
-            // Detectar Android
-            else if (/android/i.test(userAgent)) {
-                // Android - Intentar abrir Google Photos directamente en configuración de copia de seguridad
-                const appIntentSettings = 'intent://photos.google.com/settings/backup#Intent;scheme=https;package=com.google.android.apps.photos;end';
-                const appIntent = 'intent://photos.google.com/#Intent;scheme=https;package=com.google.android.apps.photos;end';
-                const playStoreUrl = 'https://play.google.com/store/apps/details?id=com.google.android.apps.photos';
-                
-                // Intentar abrir la app usando intent de configuración primero
-                try {
-                    window.location.href = appIntentSettings;
+            const currentUrl = window.location.href;
+            
+            // Intentar usar la API del portapapeles
+            if (navigator.clipboard) {
+                navigator.clipboard.writeText(currentUrl).then(function() {
+                    // Cambiar temporalmente el texto del botón
+                    const button = e.target.closest('.alt-button');
+                    const originalText = button.innerHTML;
+                    button.innerHTML = '<i class="fas fa-check"></i> ¡Copiado!';
                     
-                    // Si no se abre en 2 segundos, redirigir a Play Store
                     setTimeout(() => {
-                        window.location.href = playStoreUrl;
+                        button.innerHTML = originalText;
                     }, 2000);
-                    
-                    // Detectar si la app se abrió
-                    let appOpened = false;
-                    const startTime = Date.now();
-                    
-                    window.addEventListener('blur', () => {
-                        appOpened = true;
-                    });
-                    
-                    // Verificar después de un momento si la app se abrió
-                    setTimeout(() => {
-                        if (!appOpened && Date.now() - startTime < 2500) {
-                            // Intentar con el intent básico si el de configuración no funciona
-                            try {
-                                window.location.href = appIntent;
-                                setTimeout(() => {
-                                    window.location.href = playStoreUrl;
-                                }, 1000);
-                            } catch (error) {
-                                window.location.href = playStoreUrl;
-                            }
-                        }
-                    }, 1000);
-                    
-                } catch (error) {
-                    // Si hay error, intentar con el intent básico
-                    try {
-                        window.location.href = appIntent;
-                        setTimeout(() => {
-                            window.location.href = playStoreUrl;
-                        }, 1000);
-                    } catch (error) {
-                        window.location.href = playStoreUrl;
-                    }
-                }
+                }).catch(function(err) {
+                    // Fallback si falla
+                    fallbackCopyText(currentUrl);
+                });
+            } else {
+                // Fallback para navegadores que no soportan clipboard API
+                fallbackCopyText(currentUrl);
             }
-            // Escritorio u otros dispositivos
-            else {
-                // Redirigir a Google Photos web
-                window.location.href = 'https://photos.google.com/';
+        });
+
+        // Función fallback para copiar texto
+        function fallbackCopyText(text) {
+            const textArea = document.createElement('textarea');
+            textArea.value = text;
+            textArea.style.position = 'fixed';
+            textArea.style.left = '-999999px';
+            textArea.style.top = '-999999px';
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+            
+            try {
+                document.execCommand('copy');
+                alert('Enlace copiado al portapapeles');
+            } catch (err) {
+                prompt('Copia este enlace manualmente:', text);
             }
+            
+            document.body.removeChild(textArea);
+        }
+
+        // Mejorar la experiencia con un toque más suave
+        document.querySelectorAll('.button, .alt-button').forEach(button => {
+            button.addEventListener('touchstart', function() {
+                this.style.transform = 'scale(0.98)';
+            });
+            
+            button.addEventListener('touchend', function() {
+                this.style.transform = '';
+            });
         });
     </script>
 </body>
